@@ -1,6 +1,3 @@
-#!/bin/bash
-
-#After installing the validator, we take a new server and execute the commands:
 sudo apt update && sudo apt upgrade -y
 
 sudo apt-get install ca-certificates curl gnupg lsb-release -y
@@ -8,6 +5,8 @@ sudo apt-get install ca-certificates curl gnupg lsb-release -y
 curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
 
 echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+
+sudo apt-get update
 
 sudo apt-get install docker-ce docker-ce-cli containerd.io -y
 
@@ -27,22 +26,32 @@ wget -qO fullnode.yaml https://raw.githubusercontent.com/aptos-labs/aptos-core/m
 
 nano fullnode.yaml
 
-#We substitute the ip from the validator and save.
-#We go to the validator serv and download from there to the full node serv to the ~/testnet/ directory
-#validator-full-node-identity.yaml genesis.blob waypoint.txt#
+Меняем <Validator IP Address> на IP валидатора
+
+Заходим на сервер валидатора в папку .aptos и копируем файлы genesis.blob waypoint.txt и папку keys на сервер фул ноды в папку testnet
+
+На фул ноде вводим
 
 docker compose up -d
 
-#We go to the validator server, change the ip of the full node
+Заходим на сервер валидатора, меняем данные ### на свои
 
-aptos genesis set-validator-configuration \
-    --keys-dir ~/$WORKSPACE --local-repository-dir ~/$WORKSPACE \
-    --username $NODENAME \
-    --validator-host $PUBLIC_IP:6180 \
-    --full-node-host <YOUR_FULLNODE_IP>:6182
-    
+/usr/local/bin/aptos genesis set-validator-configuration \
+    --local-repository-dir $HOME/.aptos \
+    --username ###ИМЯ НОДЫ### \
+    --owner-public-identity-file $HOME/.aptos/keys/public-keys.yaml \
+    --validator-host ###АЙПИ ВАЛИДАТОРА###:6180 \
+    --full-node-host ###АЙПИ ФУЛНОДЫ###:6182 \
+    --stake-amount 100000000000000
+
 cd .aptos
+
 docker compose restart
 
-#Checking logs and synchronization on a full node
+Проверка логов и синхры на фул ноде
+
+docker logs -f testnet-fullnode-1 --tail 50
+
 curl 127.0.0.1:9101/metrics 2> /dev/null | grep aptos_state_sync_version | grep type
+
+https://node.aptos.zvalid.com/
